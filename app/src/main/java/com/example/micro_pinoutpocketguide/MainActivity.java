@@ -15,6 +15,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.chip.ChipGroup;
+
 public class MainActivity extends AppCompatActivity {
 
     private MainViewModel viewModel;
@@ -44,12 +46,16 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        adapter.setOnFavoriteClickListener(component -> {
+            viewModel.toggleFavorite(component.getId());
+        });
+
         // Initialize ViewModel
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
         // Observe LiveData
         viewModel.getComponentsLiveData().observe(this, components -> {
-            adapter.setComponents(components);
+            adapter.setComponents(components, viewModel.getFavoriteIds());
         });
 
         // Setup Search EditText
@@ -66,5 +72,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {}
         });
+
+        // Setup Filter Mode Chips
+        ChipGroup chipGroupMode = findViewById(R.id.chipGroupMode);
+        if (chipGroupMode != null) {
+            chipGroupMode.setOnCheckedChangeListener((group, checkedId) -> {
+                viewModel.setOnlyFavorites(checkedId == R.id.chipWorkbench);
+            });
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (viewModel != null) {
+            viewModel.loadComponents();
+        }
     }
 }
